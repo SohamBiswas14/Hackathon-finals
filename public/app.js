@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if(issues.length === 0) return list.innerHTML = '<p>No issues reported yet.</p>';
 
-        issues.forEach(issue => {
+       issues.forEach((issue, index) => {
           const states = ['Pending', 'Accepted', 'Team Dispatched', 'In Progress', 'Closed'];
           const currentIndex = states.indexOf(issue.status);
 
@@ -232,16 +232,17 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (issue.status === 'Closed' && issue.closingRemarks) remarksHtml = `<div class="track-remarks"><strong>Resolution:</strong> ${issue.closingRemarks}</div>`;
           if (issue.status === 'Declined') remarksHtml = `<div class="track-remarks" style="background:#ffebee; color:#c62828;">Issue Declined by Management</div>`;
 
-          list.innerHTML += `
-            <div class="track-card">
-              <img src="${issue.photoUrl.split(',')[0]}" alt="Thumbnail">
-              <div class="track-details">
-                <h4>Reported on: ${new Date(issue.createdAt).toLocaleDateString()}</h4>
-                <p>${issue.description}</p>
-                ${timelineHtml}
-                ${remarksHtml}
-              </div>
-            </div>`;
+         list.innerHTML += `
+  <div class="track-card">
+    <img src="${issue.photoUrl.split(',')[0]}" alt="Thumbnail">
+    <div class="track-details">
+      <h4>Serial No.: ${index + 1}</h4>
+      <h4>Reported on: ${new Date(issue.createdAt).toLocaleDateString()}</h4>
+      <p>${issue.description}</p>
+      ${timelineHtml}
+      ${remarksHtml}
+    </div>
+  </div>`;
         });
       } catch (err) { console.error(err); }
     };
