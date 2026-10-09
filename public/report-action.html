@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File a Report | NITC Portal</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body class="report-action-body dashboard-body">
+
+  <header class="dash-header">
+    <div class="user-info">
+      <a href="/report.html" class="back-btn"><i class="ph ph-arrow-left"></i> Back to Dashboard</a>
+    </div>
+    <h2>File a New Report</h2>
+  </header>
+
+  <main class="form-container">
+    <form id="issue-form" class="issue-form-card">
+
+      <div class="form-group">
+        <label for="photo-url">Photo URL (Temporary for Hackathon)</label>
+        <input type="url" id="photo-url" placeholder="https://example.com/image.jpg" required>
+        <small>Note: In production, this will be a direct Camera/File upload API.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="issue-desc">Issue Description</label>
+        <textarea id="issue-desc" rows="4" placeholder="Describe the hazard (e.g. Water leaking near Mega Hostel block B)..." required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Pinpoint Location on Campus</label>
+        <div id="map" class="map-container"></div>
+        <button type="button" id="get-location-btn" class="btn-secondary"><i class="ph ph-crosshair"></i> Use My Current GPS Location</button>
+      </div>
+
+      <button type="submit" class="save-btn"><i class="ph ph-paper-plane-tilt"></i> Submit Report to Management</button>
+    </form>
+  </main>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

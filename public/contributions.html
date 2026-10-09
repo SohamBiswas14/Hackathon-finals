@@ -7,66 +7,26 @@
   <link rel="stylesheet" href="styles.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
-<body class="dashboard-body">
+<body class="contributions-body dashboard-body">
+
   <header class="dash-header">
     <div class="user-info">
-      <img id="user-avatar" src="https://ui-avatars.com/api/?name=Student+User" alt="Profile" class="avatar">
-      <div>
-        <h2 id="user-name">Student User</h2>
-        <p id="user-dept">Department of Civil Engineering</p>
-      </div>
+      <a href="/report.html" class="back-btn"><i class="ph ph-arrow-left"></i> Back to Dashboard</a>
     </div>
-    <div class="header-actions">
-      <button id="btn-profile"><i class="ph ph-user"></i></button>
-      <button id="btn-settings"><i class="ph ph-gear"></i></button>
-      <button id="btn-help"><i class="ph ph-question"></i></button>
-    </div>
+    <h2>Civic Leaderboard</h2>
   </header>
 
-  <main class="dashboard-panel">
-    <h3>Your civic contributions</h3>
-    <div class="score-box">
-      <strong id="user-score">12</strong>
-      <span>Cleanliness points</span>
+  <main class="leaderboard-container">
+    <div class="leaderboard-header">
+      <i class="ph ph-trophy" style="font-size: 48px; color: gold;"></i>
+      <h3>Top Campus Contributors</h3>
+      <p>Thank you for keeping NITC clean and safe!</p>
     </div>
-    <ul class="status-list">
-      <li><span>Verified waste reports</span> <strong>8</strong></li>
-      <li><span>Community initiatives joined</span> <strong>3</strong></li>
-      <li><span>Impact rank</span> <strong>Top 15%</strong></li>
-    </ul>
+
+    <div class="leaderboard-list" id="leaderboard-list">
+      <!-- Injected via app.js -->
+    </div>
   </main>
-
-  <div id="modal-profile" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <h2>Profile Management</h2>
-      <label>Display Name: <input type="text" id="edit-name"></label>
-      <label>Department/Hostel: <input type="text" id="edit-dept"></label>
-      <label>Post Anonymously: <input type="checkbox" id="edit-anon"></label>
-      <button class="close-modal">Close</button>
-    </div>
-  </div>
-
-  <div id="modal-settings" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <h2>System Settings</h2>
-      <button id="toggle-theme">Toggle Dark Mode</button>
-      <button id="toggle-fullscreen">Toggle Fullscreen</button>
-      <a href="/auth/logout" class="logout-btn">Logout</a>
-      <button class="close-modal">Close</button>
-    </div>
-  </div>
-
-  <div class="chatbot-container">
-    <div id="chat-window" class="chat-window" style="display: none;">
-      <div class="chat-header">NITC Support Agent</div>
-      <div id="chat-log" class="chat-log"></div>
-      <div class="chat-input-area">
-        <input type="text" id="chat-input" placeholder="Ask for help...">
-        <button id="chat-send"><i class="ph ph-paper-plane-right"></i></button>
-      </div>
-    </div>
-    <button id="chat-fab" class="chat-fab"><i class="ph ph-chat-teardrop-text"></i></button>
-  </div>
 
   <script src="app.js"></script>
 </body>
