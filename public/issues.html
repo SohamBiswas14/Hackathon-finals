@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | NITC Portal</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="dashboard-body">
+  <header class="dash-header">
+    <div class="user-info">
+      <img id="user-avatar" src="https://ui-avatars.com/api/?name=Admin+User" alt="Profile" class="avatar">
+      <div>
+        <h2 id="user-name">Admin User</h2>
+        <p id="user-dept">Administration</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btn-profile"><i class="ph ph-user"></i></button>
+      <button id="btn-settings"><i class="ph ph-gear"></i></button>
+      <button id="btn-help"><i class="ph ph-question"></i></button>
+    </div>
+  </header>
+
+  <main class="action-hub">
+    <div class="cta-card primary">
+      <i class="ph ph-list-checks"></i>
+      <h3>Open Reports</h3>
+      <p>42 issues awaiting review</p>
+    </div>
+    <div class="cta-card secondary">
+      <i class="ph ph-shield-check"></i>
+      <h3>Resolved</h3>
+      <p>126 issues closed this month</p>
+    </div>
+    <div class="cta-card tertiary">
+      <i class="ph ph-chart-line-up"></i>
+      <h3>Monitoring</h3>
+      <p>Campus cleanliness index: 86%</p>
+    </div>
+  </main>
+
+  <section class="dashboard-panel">
+    <h3>Recent reports</h3>
+    <ul class="status-list">
+      <li><span>Blocked drain near hostel gate</span> <strong>Pending</strong></li>
+      <li><span>Garbage overflow behind library</span> <strong>In progress</strong></li>
+      <li><span>Broken streetlight near main road</span> <strong>Resolved</strong></li>
+    </ul>
+  </section>
+
+  <div id="modal-profile" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2>Profile Management</h2>
+      <label>Display Name: <input type="text" id="edit-name"></label>
+      <label>Department/Hostel: <input type="text" id="edit-dept"></label>
+      <label>Post Anonymously: <input type="checkbox" id="edit-anon"></label>
+      <button class="close-modal">Close</button>
+    </div>
+  </div>
+
+  <div id="modal-settings" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2>System Settings</h2>
+      <button id="toggle-theme">Toggle Dark Mode</button>
+      <button id="toggle-fullscreen">Toggle Fullscreen</button>
+      <a href="/auth/logout" class="logout-btn">Logout</a>
+      <button class="close-modal">Close</button>
+    </div>
+  </div>
+
+  <div class="chatbot-container">
+    <div id="chat-window" class="chat-window" style="display: none;">
+      <div class="chat-header">NITC Support Agent</div>
+      <div id="chat-log" class="chat-log"></div>
+      <div class="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Ask for help...">
+        <button id="chat-send"><i class="ph ph-paper-plane-right"></i></button>
+      </div>
+    </div>
+    <button id="chat-fab" class="chat-fab"><i class="ph ph-chat-teardrop-text"></i></button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
