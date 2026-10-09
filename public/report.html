@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Dashboard | NITC Cleanliness Portal</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="dashboard-body">
+
+  <!-- Header -->
+  <header class="dash-header">
+    <div class="user-info">
+      <img src="" alt="Avatar" id="user-avatar" class="avatar">
+      <div>
+        <h2 id="user-name">Loading...</h2>
+        <p><span id="user-dept">Department</span> • <span id="user-score">0</span> Reports Filed</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btn-profile" title="Profile"><i class="ph ph-user-circle"></i></button>
+      <button id="btn-settings" title="Settings"><i class="ph ph-gear"></i></button>
+      <button id="btn-help" title="Help"><i class="ph ph-question"></i></button>
+    </div>
+  </header>
+
+  <!-- Main Action Hub -->
+  <main class="action-hub">
+    <!-- Placeholders for Phase 4 -->
+    <a href="/report-action.html" class="cta-card primary">
+      <i class="ph ph-camera-plus"></i>
+      <h3>Report Issue</h3>
+      <p>Found a broken pipe or unmanaged waste? Snap a photo and let management know.</p>
+    </a>
+
+    <a href="/track.html" class="cta-card secondary">
+      <i class="ph ph-map-pin-line"></i>
+      <h3>Track Issues</h3>
+      <p>View the real-time resolution status of the tickets you've submitted.</p>
+    </a>
+
+    <a href="/contributions.html" class="cta-card tertiary">
+      <i class="ph ph-medal"></i>
+      <h3>Contributions</h3>
+      <p>Check out your civic impact score and view the campus leaderboard.</p>
+    </a>
+  </main>
+
+  <!-- Modals -->
+
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="modal-profile">
+    <div class="modal-content">
+      <h2>Profile Management</h2>
+      <label>
+        Display Name
+        <input type="text" id="edit-name">
+      </label>
+      <label>
+        Department / Hostel
+        <input type="text" id="edit-dept" placeholder="e.g. CSED / Mega Hostel">
+      </label>
+      <label>
+        Enable Anonymity
+        <input type="checkbox" id="edit-anon" title="Hide your name on public reports">
+      </label>
+      <button id="save-profile" class="save-btn">Save Changes</button>
+      <button class="close-btn close-modal">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="modal-settings">
+    <div class="modal-content">
+      <h2>System Settings</h2>
+      <button id="toggle-theme">Toggle Dark Mode</button>
+      <button id="toggle-fullscreen">Toggle Fullscreen</button>
+      <a href="/auth/logout" class="logout-btn">Log Out</a>
+      <button class="close-btn close-modal">Close</button>
+    </div>
+  </div>
+
+  <!-- Help & FAQ Modal -->
+  <div class="modal-overlay" id="modal-help">
+    <div class="modal-content">
+      <h2>Help & Support</h2>
+      <p><strong>Q: How do I report an issue?</strong><br>A: Click 'Report Issue', upload a photo, and make sure location permissions are enabled.</p>
+      <p><strong>Q: Will management know who reported it?</strong><br>A: By default, yes. If you fear retaliation, enable "Anonymity" in your Profile settings.</p>
+      <p><strong>Need more help?</strong> Use the AI Assistant in the bottom right corner!</p>
+      <button class="close-btn close-modal">Close</button>
+    </div>
+  </div>
+
+  <!-- AI Chatbot UI -->
+  <div class="chatbot-container">
+    <button class="chat-fab" id="chat-fab">
+      <i class="ph ph-chats-circle"></i>
+    </button>
+    <div class="chat-window" id="chat-window" style="display: none;">
+      <div class="chat-header">NITC Support Assistant</div>
+      <div class="chat-log" id="chat-log">
+        <div class="chat-bubble ai-msg">Hi! How can I help you navigate the portal today?</div>
+      </div>
+      <div class="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Type a message...">
+        <button id="chat-send"><i class="ph ph-paper-plane-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
