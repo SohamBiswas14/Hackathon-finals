@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NITC Cleanliness Portal | Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  </head>
+  <body>
+    <div class="login-container">
+      <i class="ph ph-info info-icon" id="info-toggle"></i>
+      <i class="ph ph-leaf" style="font-size: 48px; color: #2e7d32;"></i>
+      <h1>NITC Cleanliness Portal</h1>
+      <p class="subtitle">Secure login for Students, Staff, and Management</p>
+
+      <a href="/auth/google" class="google-btn">
+        <i class="ph ph-google-logo"></i>
+        Sign in with Institute Email
+      </a>
+
+      <p id="error-msg">
+        <i class="ph ph-warning-circle"></i>
+        Please use a valid @nitc.ac.in email address.
+      </p>
+    </div>
+
+    <div class="modal-overlay" id="info-modal">
+      <div class="modal-content">
+        <h2>About This Portal</h2>
+        <p>
+          This service allows the NITC community to report environmental hazards,
+          broken infrastructure, and waste mismanagement.
+        </p>
+        <p>
+          <strong>How to use:</strong> Ensure your GPS is enabled when taking a photo
+          of the issue so the corporation can accurately locate it.
+        </p>
+        <p>
+          <strong>Privacy:</strong> Location data is strictly used for issue resolution
+          and is not tracked continuously.
+        </p>
+        <button class="close-btn" id="close-modal">Got it</button>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
