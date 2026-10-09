@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File a Report | NITC Portal</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body class="report-action-body dashboard-body">
+
+  <header class="dash-header">
+    <div class="user-info">
+      <a href="/report.html" class="back-btn"><i class="ph ph-arrow-left"></i> Back to Dashboard</a>
+    </div>
+    <h2>File a New Report</h2>
+  </header>
+
+  <main class="form-container">
+    <form id="issue-form" class="issue-form-card">
+
+     <div class="form-group">
+        <label>Add photos/videos</label>
+
+        <input type="hidden" id="photo-url">
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Added the "multiple" attribute here -->
+          <input type="file" id="media-upload" accept="image/*,video/*" multiple style="display: none;">
+
+          <button type="button" id="btn-upload-media" class="btn-secondary" style="margin-top: 0; padding: 12px; border-radius: 6px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;" title="Upload photo/video">
+            <i class="ph ph-plus" style="font-size: 20px; font-weight: bold;"></i> Upload Files
+          </button>
+        </div>
+
+        <!-- Added a container to display image/video previews -->
+        <div id="media-preview-container" class="preview-container"></div>
+
+        <small id="upload-status">Select files from your device to attach to this report (Max 5).</small>
+      </div>
+
+      <div class="form-group">
+        <label for="issue-desc">Issue Description</label>
+        <textarea id="issue-desc" rows="4" placeholder="Describe the hazard (e.g. Water leaking near Mega Hostel block B)..." required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Pinpoint Location on Campus</label>
+        <div id="map" class="map-container"></div>
+        <button type="button" id="get-location-btn" class="btn-secondary"><i class="ph ph-crosshair"></i> Use My Current GPS Location</button>
+      </div>
+
+      <button type="submit" class="save-btn"><i class="ph ph-paper-plane-tilt"></i> Submit Report to Management</button>
+    </form>
+  </main>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -3,83 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard | NITC Portal</title>
+  <title>Admin Dashboard | Management</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
-<body class="dashboard-body">
-  <header class="dash-header">
-    <div class="user-info">
-      <img id="user-avatar" src="https://ui-avatars.com/api/?name=Admin+User" alt="Profile" class="avatar">
-      <div>
-        <h2 id="user-name">Admin User</h2>
-        <p id="user-dept">Administration</p>
+<body class="admin-body">
+
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <i class="ph ph-shield-check"></i> NITC Admin
       </div>
-    </div>
-    <div class="header-actions">
-      <button id="btn-profile"><i class="ph ph-user"></i></button>
-      <button id="btn-settings"><i class="ph ph-gear"></i></button>
-      <button id="btn-help"><i class="ph ph-question"></i></button>
-    </div>
-  </header>
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-target="view-issues"><i class="ph ph-list-dashes"></i> Issues Triage</button>
+        <button class="nav-btn" data-target="view-overview"><i class="ph ph-chart-bar"></i> Overview</button>
+        <button class="nav-btn" data-target="view-settings"><i class="ph ph-gear"></i> Settings</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="btn-help"><i class="ph ph-question"></i> Help</button>
+        <a href="/auth/logout" class="logout-link"><i class="ph ph-sign-out"></i> Logout</a>
+      </div>
+    </aside>
 
-  <main class="action-hub">
-    <div class="cta-card primary">
-      <i class="ph ph-list-checks"></i>
-      <h3>Open Reports</h3>
-      <p>42 issues awaiting review</p>
-    </div>
-    <div class="cta-card secondary">
-      <i class="ph ph-shield-check"></i>
-      <h3>Resolved</h3>
-      <p>126 issues closed this month</p>
-    </div>
-    <div class="cta-card tertiary">
-      <i class="ph ph-chart-line-up"></i>
-      <h3>Monitoring</h3>
-      <p>Campus cleanliness index: 86%</p>
-    </div>
-  </main>
+    <!-- Main Content Shell -->
+    <main class="admin-main">
 
-  <section class="dashboard-panel">
-    <h3>Recent reports</h3>
-    <ul class="status-list">
-      <li><span>Blocked drain near hostel gate</span> <strong>Pending</strong></li>
-      <li><span>Garbage overflow behind library</span> <strong>In progress</strong></li>
-      <li><span>Broken streetlight near main road</span> <strong>Resolved</strong></li>
-    </ul>
-  </section>
+      <!-- Issues View (Phase 4) -->
+      <section id="view-issues" class="view-section active">
+        <header class="section-header">
+          <h2>Active Issues Queue</h2>
+          <button id="refresh-issues" class="btn-primary"><i class="ph ph-arrows-clockwise"></i> Refresh</button>
+        </header>
 
-  <div id="modal-profile" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <h2>Profile Management</h2>
-      <label>Display Name: <input type="text" id="edit-name"></label>
-      <label>Department/Hostel: <input type="text" id="edit-dept"></label>
-      <label>Post Anonymously: <input type="checkbox" id="edit-anon"></label>
-      <button class="close-modal">Close</button>
-    </div>
+        <div class="kanban-board">
+          <div class="kanban-col">
+            <h3>New / Pending</h3>
+            <div id="col-pending" class="kanban-list"></div>
+          </div>
+          <div class="kanban-col">
+            <h3>Active Progress</h3>
+            <div id="col-active" class="kanban-list"></div>
+          </div>
+          <div class="kanban-col">
+            <h3>Completed / Closed</h3>
+            <div id="col-closed" class="kanban-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-overview" class="view-section" style="display:none;">
+        <h2>System Overview & Analytics</h2>
+        <p>Analytics dashboard placeholder. Coming soon.</p>
+      </section>
+
+      <section id="view-settings" class="view-section" style="display:none;">
+        <h2>Portal Settings</h2>
+        <button id="toggle-theme" class="btn-primary">Toggle Dark Mode</button>
+      </section>
+    </main>
   </div>
 
-  <div id="modal-settings" class="modal-overlay" style="display: none;">
+  <!-- Resolution Modal -->
+  <div class="modal-overlay" id="modal-close-issue">
     <div class="modal-content">
-      <h2>System Settings</h2>
-      <button id="toggle-theme">Toggle Dark Mode</button>
-      <button id="toggle-fullscreen">Toggle Fullscreen</button>
-      <a href="/auth/logout" class="logout-btn">Logout</a>
-      <button class="close-modal">Close</button>
+      <h2>Close Issue</h2>
+      <p>Please provide a resolution note for the citizen.</p>
+      <textarea id="close-remarks" rows="4" placeholder="e.g. Broken pipe replaced by maintenance..."></textarea>
+      <input type="hidden" id="close-issue-id">
+      <button id="submit-close-issue" class="save-btn">Confirm Resolution</button>
+      <button class="close-btn close-modal">Cancel</button>
     </div>
   </div>
 
   <div class="chatbot-container">
-    <div id="chat-window" class="chat-window" style="display: none;">
-      <div class="chat-header">NITC Support Agent</div>
-      <div id="chat-log" class="chat-log"></div>
+    <button class="chat-fab" id="chat-fab"><i class="ph ph-chats-circle"></i></button>
+    <div class="chat-window" id="chat-window" style="display: none;">
+      <div class="chat-header">Admin Assistant</div>
+      <div class="chat-log" id="chat-log"><div class="chat-bubble ai-msg">Admin portal loaded. Need help?</div></div>
       <div class="chat-input-area">
-        <input type="text" id="chat-input" placeholder="Ask for help...">
+        <input type="text" id="chat-input" placeholder="Type a message...">
         <button id="chat-send"><i class="ph ph-paper-plane-right"></i></button>
       </div>
     </div>
-    <button id="chat-fab" class="chat-fab"><i class="ph ph-chat-teardrop-text"></i></button>
   </div>
 
   <script src="app.js"></script>
