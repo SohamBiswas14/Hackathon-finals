@@ -159,7 +159,17 @@ app.put('/api/reports/:id/status', requireAuth, requireAdmin, async (req, res) =
     const updateData = { status };
     if (closingRemarks) updateData.closingRemarks = closingRemarks;
 
+    // Fetch the original report first to check its previous status
+    const originalReport = await Report.findById(req.params.id);
+    if (!originalReport) return res.status(404).json({ error: 'Report not found' });
+
     const report = await Report.findByIdAndUpdate(req.params.id, updateData, { new: true });
+
+    // If the admin is declining a report that wasn't already declined, revoke the user's credit
+    if (status === 'Declined' && originalReport.status !== 'Declined') {
+      await User.findByIdAndUpdate(report.userId, { $inc: { totalReports: -1 } });
+    }
+
     res.json(report);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update report' });
@@ -199,7 +209,7 @@ app.post('/api/chat', requireAuth, async (req, res) => {
 });
 
 // --- Auth Routes ---
-const authorizedAdmins = ['gautham_b261353ec@nitc.ac.in', 'tgbdragon2008@gmail.com'];
+const authorizedAdmins = ['gautham_b261353ec@nitc.ac.in', 'tgbdragon2008@gmail.com','sampa6723@gmail.com'];
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -207,10 +217,16 @@ passport.use(new GoogleStrategy({
     callbackURL: process.env.CALLBACK_URL || '/auth/google/callback'
   }, async (accessToken, refreshToken, profile, done) => {
     try {
-      if (profile._json.hd !== 'nitc.ac.in') return done(null, false, { message: 'Invalid domain' });
+      // Get the email first so we can check if they are an admin
+      const email = profile.emails[0].value;
+
+      // Block if domain is not nitc.ac.in AND the email is NOT in the authorizedAdmins list
+      if (profile._json.hd !== 'nitc.ac.in' && !authorizedAdmins.includes(email)) {
+        return done(null, false, { message: 'Invalid domain' });
+      }
+
       let user = await User.findOne({ googleId: profile.id });
       if (!user) {
-        const email = profile.emails[0].value;
         user = await User.create({
           googleId: profile.id,
           email,
@@ -223,7 +239,12 @@ passport.use(new GoogleStrategy({
     } catch (err) { return done(err, null); }
 }));
 
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'], hostedDomain: 'nitc.ac.in', session: false }));
+// Removed hostedDomain so the Google UI doesn't lock the input, but backend logic still verifies the domain
+app.get('/auth/google', passport.authenticate('google', {
+  scope: ['profile', 'email'],
+  session: false,
+  prompt: 'select_account'
+}));
 
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/?error=domain', session: false }), (req, res) => {
   const token = jwt.sign({ id: req.user._id, role: req.user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });

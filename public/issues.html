@@ -6,6 +6,8 @@
   <title>Admin Dashboard | Management</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Leaflet Map CSS for Admin view -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body class="admin-body">
 
@@ -63,7 +65,28 @@
       </section>
     </main>
   </div>
+<!-- Issue Full Details Modal -->
+  <div class="modal-overlay" id="modal-issue-details">
+    <div class="modal-content" style="max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto;">
+      <h2>Issue Details</h2>
 
+      <!-- Media Gallery -->
+      <div id="detail-media-gallery" style="display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px;"></div>
+
+      <p><strong>Reported By:</strong> <span id="detail-reporter"></span></p>
+      <p><strong>Description:</strong> <span id="detail-description"></span></p>
+      <p id="detail-remarks-container" style="display: none; background: #e8f5e9; color: #1b5e20; padding: 10px; border-radius: 6px; margin-top: 10px;">
+        <strong>Closing Remarks:</strong> <span id="detail-remarks"></span>
+      </p>
+
+      <div style="margin-top: 15px; margin-bottom: 15px;">
+        <strong>Location on Map:</strong>
+        <div id="detail-map" style="width: 100%; height: 250px; border-radius: 8px; border: 1px solid var(--border-color); z-index: 1; margin-top: 5px;"></div>
+      </div>
+
+      <button class="close-btn close-modal">Close Details</button>
+    </div>
+  </div>
   <!-- Resolution Modal -->
   <div class="modal-overlay" id="modal-close-issue">
     <div class="modal-content">
@@ -88,6 +111,8 @@
     </div>
   </div>
 
+<!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

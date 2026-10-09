@@ -286,6 +286,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Phase 3 & 4: Admin Management Logic ---
   if (document.querySelector('.admin-body')) {
+    let allAdminIssues = [];
+    let adminMap = null;
+    let adminMarker = null;
+
     document.querySelectorAll('.nav-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -307,6 +311,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         colPending.innerHTML = ''; colActive.innerHTML = ''; colClosed.innerHTML = '';
 
+        allAdminIssues = issues; // Save issues to state for the modal
+
         issues.forEach(issue => {
           const uName = issue.userId?.anonymityEnabled ? 'Anonymous' : (issue.userId?.name || 'Unknown');
           const card = document.createElement('div');
@@ -316,7 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <img src="${issue.photoUrl.split(',')[0]}" alt="Issue Photo">
             <h4>Reported by: ${uName}</h4>
             <p>${issue.description}</p>
-            <small>Lat: ${issue.location.lat.toFixed(4)}, Lng: ${issue.location.lng.toFixed(4)}</small>
+            <button type="button" class="btn-secondary view-details-btn" data-id="${issue._id}" style="width: 100%; padding: 6px; margin: 8px 0; font-size: 13px;">View Map & Full Media</button>
             <div class="issue-actions" data-id="${issue._id}">
               ${generateAdminControls(issue.status)}
             </div>
@@ -326,7 +332,64 @@ document.addEventListener('DOMContentLoaded', async () => {
           else if (['Accepted', 'Team Dispatched', 'In Progress'].includes(issue.status)) colActive.appendChild(card);
           else colClosed.appendChild(card);
         });
+
         attachAdminActionListeners();
+
+        // Attach logic to the new "View Details" buttons
+        document.querySelectorAll('.view-details-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const issueId = e.target.dataset.id;
+            const issue = allAdminIssues.find(i => i._id === issueId);
+            if(!issue) return;
+
+            const uName = issue.userId?.anonymityEnabled ? 'Anonymous Citizen' : (issue.userId?.name || 'Unknown User');
+            document.getElementById('detail-reporter').textContent = uName;
+            document.getElementById('detail-description').textContent = issue.description;
+
+            // Show closing remarks if closed
+            const remarksContainer = document.getElementById('detail-remarks-container');
+            if (issue.status === 'Closed' && issue.closingRemarks) {
+              document.getElementById('detail-remarks').textContent = issue.closingRemarks;
+              remarksContainer.style.display = 'block';
+            } else {
+              remarksContainer.style.display = 'none';
+            }
+
+            // Populate Media Gallery
+            const mediaContainer = document.getElementById('detail-media-gallery');
+            mediaContainer.innerHTML = '';
+            const urls = issue.photoUrl.split(',');
+            urls.forEach(url => {
+              if(!url) return;
+              const isVideo = url.match(/\.(mp4|webm|ogg)$/i);
+              if(isVideo) {
+                mediaContainer.innerHTML += `<video src="${url}" controls style="height: 150px; border-radius: 6px; flex-shrink: 0; background: black;"></video>`;
+              } else {
+                mediaContainer.innerHTML += `<a href="${url}" target="_blank"><img src="${url}" style="height: 150px; border-radius: 6px; flex-shrink: 0; cursor: pointer; border: 1px solid var(--border-color);"></a>`;
+              }
+            });
+
+            // Show modal
+            document.getElementById('modal-issue-details').style.display = 'flex';
+
+            // Initialize or update Map
+            setTimeout(() => {
+              const coords = [issue.location.lat, issue.location.lng];
+              if(!adminMap) {
+                adminMap = L.map('detail-map').setView(coords, 17);
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+                  attribution: 'Tiles &copy; Esri', maxZoom: 19
+                }).addTo(adminMap);
+                adminMarker = L.marker(coords).addTo(adminMap);
+              } else {
+                adminMap.setView(coords, 17);
+                adminMarker.setLatLng(coords);
+                adminMap.invalidateSize(); // Fixes map rendering glitch inside modals
+              }
+            }, 100);
+          });
+        });
+
       } catch (err) { console.error('Admin Fetch Error:', err); }
     };
 
