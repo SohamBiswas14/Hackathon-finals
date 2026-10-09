@@ -469,12 +469,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text }) });
         const data = await res.json();
         chatLog.removeChild(typing);
-        chatLog.innerHTML += `<div class="chat-bubble ai-msg">${data.reply}</div>`;
+
+        // Check if the server responded successfully before trying to print 'data.reply'
+        if (res.ok && data.reply) {
+          chatLog.innerHTML += `<div class="chat-bubble ai-msg">${data.reply}</div>`;
+        } else {
+          // If there is an error, print the error message instead of 'undefined'
+          chatLog.innerHTML += `<div class="chat-bubble ai-msg error">${data.error || 'Connection error.'}</div>`;
+        }
       } catch (err) {
         chatLog.removeChild(typing);
         chatLog.innerHTML += `<div class="chat-bubble ai-msg error">Connection error.</div>`;
       }
-      chatLog.scrollTop = chatLog.scrollHeight;
     };
 
     document.getElementById('chat-send')?.addEventListener('click', sendMessage);

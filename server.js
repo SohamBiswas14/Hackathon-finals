@@ -23,7 +23,7 @@ const upload = multer({ storage });
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-const ai = new GoogleGenAI();
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // --- Middleware ---
 app.use(express.json());
@@ -204,7 +204,8 @@ app.post('/api/chat', requireAuth, async (req, res) => {
     });
     res.json({ reply: response.text });
   } catch (error) {
-    res.status(500).json({ error: 'Failed AI request' });
+    console.error('AI Chat Error:', error); // Prints the real error to your terminal for debugging
+    res.status(500).json({ error: 'Sorry, I am currently facing a server error.' });
   }
 });
 
