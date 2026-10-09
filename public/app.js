@@ -66,12 +66,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // --- Phase 5: Reporting Form & Leaflet GPS Map ---
+ // --- Phase 5: Reporting Form & Leaflet GPS Map ---
   if (document.querySelector('.report-action-body')) {
     // Initialize map centered at NITC by default
     let defaultCoords = [11.3216, 75.9336];
     let map = L.map('map').setView(defaultCoords, 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    // CHANGED: Using Esri World Street Map tiles which are free, reliable, and do not require an API key
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
+      maxZoom: 19
+    }).addTo(map);
 
     let marker = L.marker(defaultCoords, { draggable: true }).addTo(map);
 
@@ -85,7 +90,98 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, () => alert("Please allow location access in your browser."));
       }
     });
+// Handle Local File Uploads (Photos & Videos)
+    const mediaUpload = document.getElementById('media-upload');
+    const btnUploadMedia = document.getElementById('btn-upload-media');
+    const photoUrlInput = document.getElementById('photo-url');
+    const uploadStatus = document.getElementById('upload-status');
+    const previewContainer = document.getElementById('media-preview-container');
 
+    // Array to track all uploaded file URLs
+    let uploadedFiles = [];
+
+    if (btnUploadMedia && mediaUpload) {
+      btnUploadMedia.addEventListener('click', () => mediaUpload.click());
+
+      mediaUpload.addEventListener('change', async (e) => {
+        const files = e.target.files;
+        if (!files.length) return;
+
+        uploadStatus.textContent = 'Uploading... Please wait.';
+        uploadStatus.style.color = 'var(--accent-color)';
+
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+          formData.append('media', files[i]);
+        }
+
+        try {
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            // Append new files to our array
+            uploadedFiles = uploadedFiles.concat(data.urls);
+            updatePreviewAndInput();
+
+            uploadStatus.textContent = 'Files uploaded successfully!';
+            uploadStatus.style.color = 'var(--primary-color)';
+          } else {
+            uploadStatus.textContent = 'Upload failed. Please try again.';
+            uploadStatus.style.color = 'red';
+          }
+        } catch (err) {
+          console.error(err);
+          uploadStatus.textContent = 'Error connecting to server for upload.';
+          uploadStatus.style.color = 'red';
+        }
+
+        // Reset file input so the user can select the same file again if they deleted it
+        mediaUpload.value = '';
+      });
+
+      // Global function to remove a file when the 'X' button is clicked
+      window.removeUploadedFile = async (index) => {
+        const urlToRemove = uploadedFiles[index];
+
+        // Remove from UI array instantly
+        uploadedFiles.splice(index, 1);
+        updatePreviewAndInput();
+
+        // Tell backend to delete the file from the server
+        try {
+          await fetch('/api/upload', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: urlToRemove })
+          });
+        } catch (err) { console.error('Failed to delete file on server', err); }
+      };
+
+      // Function to render the UI previews and update the hidden text box
+      function updatePreviewAndInput() {
+        // We store the URLs as a comma-separated list in the hidden database input
+        photoUrlInput.value = uploadedFiles.join(',');
+
+        previewContainer.innerHTML = '';
+        uploadedFiles.forEach((url, index) => {
+          const isVideo = url.match(/\.(mp4|webm|ogg)$/i);
+          const mediaTag = isVideo
+            ? `<video src="${url}" muted autoplay loop></video>`
+            : `<img src="${url}" alt="Preview">`;
+
+          previewContainer.innerHTML += `
+            <div class="preview-item">
+              ${mediaTag}
+              <button type="button" class="delete-preview-btn" onclick="removeUploadedFile(${index})" title="Remove file"><i class="ph ph-x"></i></button>
+            </div>
+          `;
+        });
+      }
+    }
     // Handle Form Submit
     document.getElementById('issue-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -138,7 +234,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           list.innerHTML += `
             <div class="track-card">
-              <img src="${issue.photoUrl}" alt="Thumbnail">
+              <img src="${issue.photoUrl.split(',')[0]}" alt="Thumbnail">
               <div class="track-details">
                 <h4>Reported on: ${new Date(issue.createdAt).toLocaleDateString()}</h4>
                 <p>${issue.description}</p>
@@ -217,7 +313,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           card.className = `issue-card status-${issue.status.replace(' ', '')}`;
           card.innerHTML = `
             <span class="status-badge status-${issue.status.replace(' ', '')}">${issue.status}</span>
-            <img src="${issue.photoUrl}" alt="Issue Photo">
+            <img src="${issue.photoUrl.split(',')[0]}" alt="Issue Photo">
             <h4>Reported by: ${uName}</h4>
             <p>${issue.description}</p>
             <small>Lat: ${issue.location.lat.toFixed(4)}, Lng: ${issue.location.lng.toFixed(4)}</small>

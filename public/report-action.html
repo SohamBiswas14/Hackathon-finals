@@ -21,10 +21,24 @@
   <main class="form-container">
     <form id="issue-form" class="issue-form-card">
 
-      <div class="form-group">
-        <label for="photo-url">Photo URL (Temporary for Hackathon)</label>
-        <input type="url" id="photo-url" placeholder="https://example.com/image.jpg" required>
-        <small>Note: In production, this will be a direct Camera/File upload API.</small>
+     <div class="form-group">
+        <label>Add photos/videos</label>
+
+        <input type="hidden" id="photo-url">
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Added the "multiple" attribute here -->
+          <input type="file" id="media-upload" accept="image/*,video/*" multiple style="display: none;">
+
+          <button type="button" id="btn-upload-media" class="btn-secondary" style="margin-top: 0; padding: 12px; border-radius: 6px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;" title="Upload photo/video">
+            <i class="ph ph-plus" style="font-size: 20px; font-weight: bold;"></i> Upload Files
+          </button>
+        </div>
+
+        <!-- Added a container to display image/video previews -->
+        <div id="media-preview-container" class="preview-container"></div>
+
+        <small id="upload-status">Select files from your device to attach to this report (Max 5).</small>
       </div>
 
       <div class="form-group">

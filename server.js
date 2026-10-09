@@ -7,6 +7,19 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
+const multer = require('multer');
+const fs = require('fs');
+
+// Ensure upload directory exists
+const uploadDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+// Configure Multer storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/\s+/g, '-'))
+});
+const upload = multer({ storage });
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -101,7 +114,23 @@ app.get('/api/leaderboard', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }
 });
+// --- File Upload API ---
+app.post('/api/upload', requireAuth, upload.array('media', 5), (req, res) => {
+  if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No files uploaded' });
+  // Return an array of the public URLs for the frontend to use
+  const urls = req.files.map(file => '/uploads/' + file.filename);
+  res.json({ urls });
+});
 
+// Endpoint to delete a mistakenly uploaded file
+app.delete('/api/upload', requireAuth, (req, res) => {
+  const { url } = req.body;
+  if (url) {
+    const filePath = path.join(__dirname, 'public', url);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
+  res.json({ success: true });
+});
 // --- Reports APIs (Phase 4 & 5) ---
 // Admin: Get all reports
 app.get('/api/reports', requireAuth, requireAdmin, async (req, res) => {

@@ -130,3 +130,9 @@ body.dark-theme .ai-msg { background: #333; color: #e0e0e0; }
 .chat-input-area { display: flex; padding: 10px; border-top: 1px solid var(--border-color); background: var(--chat-bg); }
 #chat-input { flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--bg-color); color: var(--text-color); outline: none; }
 #chat-send { background: none; border: none; color: var(--primary-color); font-size: 24px; margin-left: 10px; cursor: pointer; }
+/* Phase 5 Media Preview Styles */
+.preview-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; empty-cells: hide; }
+.preview-item { position: relative; width: 80px; height: 80px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); background: var(--bg-color); }
+.preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
+.delete-preview-btn { position: absolute; top: 4px; right: 4px; background: rgba(211, 47, 47, 0.9); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: transform 0.2s; }
+.delete-preview-btn:hover { transform: scale(1.1); background: #b71c1c; }
