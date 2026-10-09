@@ -94,7 +94,7 @@ app.put('/api/user/me', requireAuth, async (req, res) => {
   try {
     const { name, department, anonymityEnabled } = req.body;
     const user = await User.findByIdAndUpdate(
-      req.user.id, { name, department, anonymityEnabled }, { new: true }
+      req.user.id, { name, department, anonymityEnabled }, { returnDocument: 'after' }
     ).select('-googleId');
     res.json(user);
   } catch (error) {
@@ -163,7 +163,7 @@ app.put('/api/reports/:id/status', requireAuth, requireAdmin, async (req, res) =
     const originalReport = await Report.findById(req.params.id);
     if (!originalReport) return res.status(404).json({ error: 'Report not found' });
 
-    const report = await Report.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    const report = await Report.findByIdAndUpdate(req.params.id, updateData, { returnDocument: 'after' });
 
     // If the admin is declining a report that wasn't already declined, revoke the user's credit
     if (status === 'Declined' && originalReport.status !== 'Declined') {
