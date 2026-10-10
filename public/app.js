@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const storedQuote = localStorage.getItem('dailyQuote');
     const storedDate = localStorage.getItem('dailyQuoteDate');
 
-    // If we already fetched a quote today, use it. Otherwise, fetch a new one!
     if (storedDate === today && storedQuote) {
       dailyQuoteMarquee.textContent = "🌍 Quote of the Day: " + storedQuote;
     } else {
@@ -46,8 +45,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Phase 1: Login Check & Rotating Backgrounds ---
   if (!document.querySelector('.dashboard-body') && !document.querySelector('.admin-body')) {
-    
-    // Rotating Backgrounds for Login Page
     const bgs = [
       'url("https://upload.wikimedia.org/wikipedia/commons/e/e4/NIT_Calicut_Main_Building.jpg")',
       'url("https://images.shiksha.com/mediadata/images/1572506240phpLp1vL8.jpeg")',
@@ -71,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupModal('info-toggle', 'info-modal');
   }
 
-  // --- Phase 2: Main User Dashboard Specifics ---
+  // --- Phase 2 & 6: Main User Dashboard Specifics ---
   if (document.querySelector('.dashboard-body') && !document.querySelector('.report-action-body') && !document.querySelector('.track-body') && !document.querySelector('.contributions-body')) {
 
     async function loadProfile() {
@@ -82,7 +79,34 @@ document.addEventListener('DOMContentLoaded', async () => {
           document.getElementById('user-name').textContent = user.name || 'Student';
           document.getElementById('user-avatar').src = user.picture || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name);
           document.getElementById('user-dept').textContent = user.department || 'Not Specified';
-          document.getElementById('user-score').textContent = user.totalReports ?? 0;
+          
+          // Rank Logic Calculation
+          const score = user.totalReports ?? 0;
+          document.getElementById('user-score').textContent = score;
+          
+          let rankTitle = "Seedling";
+          let nextTier = 5;
+          let icon = "ph-plant";
+          let color1 = "#81c784"; let color2 = "#388e3c";
+
+          if (score >= 25) {
+            rankTitle = "Campus Champion"; nextTier = 50; icon = "ph-crown"; color1 = "#ffb300"; color2 = "#f57c00";
+          } else if (score >= 10) {
+            rankTitle = "Eco-Guardian"; nextTier = 25; icon = "ph-shield-check"; color1 = "#64b5f6"; color2 = "#1976d2";
+          } else if (score >= 5) {
+            rankTitle = "Ranger"; nextTier = 10; icon = "ph-binoculars"; color1 = "#ba68c8"; color2 = "#7b1fa2";
+          }
+
+          document.getElementById('user-rank-title').textContent = rankTitle;
+          document.getElementById('rank-icon-ph').className = `ph ${icon}`;
+          document.querySelector('.rank-icon').style.background = `linear-gradient(135deg, ${color1}, ${color2})`;
+          
+          const progressPercent = Math.min((score / nextTier) * 100, 100);
+          document.getElementById('rank-progress').style.width = `${progressPercent}%`;
+          document.getElementById('rank-progress').style.background = `linear-gradient(90deg, ${color1}, ${color2})`;
+          document.getElementById('rank-next-tier').textContent = score >= 50 ? "Max Rank Achieved!" : `${nextTier - score} reports to next rank`;
+
+          // Modal defaults
           document.getElementById('edit-name').value = user.name || '';
           document.getElementById('edit-dept').value = user.department || '';
           document.getElementById('edit-anon').checked = Boolean(user.anonymityEnabled);
@@ -90,6 +114,39 @@ document.addEventListener('DOMContentLoaded', async () => {
       } catch (err) { console.error('Failed to load profile', err); }
     }
     loadProfile();
+
+    async function loadEcoFeed() {
+      try {
+        const res = await fetch('/api/reports/feed');
+        if (res.ok) {
+          const feedData = await res.json();
+          const feedContainer = document.getElementById('eco-feed-list');
+          feedContainer.innerHTML = '';
+          
+          if(feedData.length === 0) {
+            feedContainer.innerHTML = '<p style="text-align: center; color: #777; padding: 20px;">No recent resolutions to show yet.</p>';
+            return;
+          }
+
+          feedData.forEach((item, index) => {
+            const dateStr = new Date(item.closedAt).toLocaleDateString();
+            const delay = index * 0.15; // Staggered animation
+            feedContainer.innerHTML += `
+              <div class="feed-item" style="animation-delay: ${delay}s">
+                <div>
+                  <h4 style="margin: 0 0 4px 0; font-size: 14px;">Issue Fixed: ${item.category || 'Maintenance'}</h4>
+                  <p style="margin: 0; font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">"${item.description}"</p>
+                </div>
+                <div style="text-align: right;">
+                  <span style="font-size: 11px; color: var(--primary-color); font-weight: bold; background: rgba(76, 175, 80, 0.1); padding: 4px 8px; border-radius: 12px;">Resolved on ${dateStr}</span>
+                </div>
+              </div>
+            `;
+          });
+        }
+      } catch(err) { console.error("Failed to load eco feed", err); }
+    }
+    loadEcoFeed();
 
     document.getElementById('save-profile')?.addEventListener('click', async () => {
       const name = document.getElementById('edit-name').value;
@@ -110,18 +167,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
  // --- Phase 5: Reporting Form & Leaflet GPS Map ---
   if (document.querySelector('.report-action-body')) {
-    // Initialize map centered at NITC by default
     let defaultCoords = [11.3216, 75.9336];
     let map = L.map('map').setView(defaultCoords, 15);
 
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
-      maxZoom: 19
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri', maxZoom: 19
     }).addTo(map);
 
     let marker = L.marker(defaultCoords, { draggable: true }).addTo(map);
 
-    // Try to get precise location
     document.getElementById('get-location-btn').addEventListener('click', () => {
       if(navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
@@ -132,7 +186,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    // Handle Local File Uploads (Photos & Videos)
     const mediaUpload = document.getElementById('media-upload');
     const btnUploadMedia = document.getElementById('btn-upload-media');
     const photoUrlInput = document.getElementById('photo-url');
@@ -152,16 +205,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         uploadStatus.style.color = 'var(--accent-color)';
 
         const formData = new FormData();
-        for (let i = 0; i < files.length; i++) {
-          formData.append('media', files[i]);
-        }
+        for (let i = 0; i < files.length; i++) { formData.append('media', files[i]); }
 
         try {
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-          });
-
+          const res = await fetch('/api/upload', { method: 'POST', body: formData });
           if (res.ok) {
             const data = await res.json();
             uploadedFiles = uploadedFiles.concat(data.urls);
@@ -185,11 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         uploadedFiles.splice(index, 1);
         updatePreviewAndInput();
         try {
-          await fetch('/api/upload', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: urlToRemove })
-          });
+          await fetch('/api/upload', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: urlToRemove }) });
         } catch (err) { console.error('Failed to delete file on server', err); }
       };
 
@@ -212,7 +255,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Handle Form Submit
     document.getElementById('issue-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const photoUrl = document.getElementById('photo-url').value;
@@ -223,18 +265,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       try {
         const res = await fetch('/api/reports', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            photoUrl,
-            description,
-            category,
-            urgency,
-            lat: position.lat,
-            lng: position.lng
-          })
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photoUrl, description, category, urgency, lat: position.lat, lng: position.lng })
         });
-        if(res.ok) window.location.href = '/track.html'; // redirect on success
+        if(res.ok) window.location.href = '/track.html';
         else alert("Failed to submit issue.");
       } catch(err) { console.error(err); }
     });
@@ -270,7 +304,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (issue.status === 'Closed' && issue.closingRemarks) remarksHtml = `<div class="track-remarks"><strong>Resolution:</strong> ${issue.closingRemarks}</div>`;
         if (issue.status === 'Declined') remarksHtml = `<div class="track-remarks" style="background:#ffebee; color:#c62828;">Issue Declined by Management</div>`;
 
-        // Rating UI if Closed
         let ratingHtml = '';
         if (issue.status === 'Closed') {
             if (issue.rating > 0) {
@@ -307,7 +340,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>`;
       });
 
-      // Attach Rating Event Listeners
       document.querySelectorAll('.rate-submit-btn').forEach(btn => {
           btn.addEventListener('click', async (e) => {
               const issueId = e.target.dataset.id;
@@ -315,14 +347,9 @@ document.addEventListener('DOMContentLoaded', async () => {
               const rating = selectEl.value;
               try {
                   const res = await fetch(`/api/reports/${issueId}/rate`, {
-                      method: 'PUT',
-                      headers: {'Content-Type': 'application/json'},
-                      body: JSON.stringify({ rating })
+                      method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ rating })
                   });
-                  if (res.ok) {
-                      alert('Thank you for your feedback!');
-                      fetchMyIssues(); // Refresh list to hide the dropdown and show the score
-                  }
+                  if (res.ok) { alert('Thank you for your feedback!'); fetchMyIssues(); }
               } catch (err) { console.error('Rating failed', err); }
           });
       });
@@ -463,7 +490,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         });
 
-        // Generate Metrics Component
         const overviewStats = document.getElementById('overview-stats');
         if (overviewStats) {
             if (closedCount > 0) {
@@ -486,7 +512,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         attachAdminActionListeners();
 
-        // Attach logic to the new "View Details" buttons
         document.querySelectorAll('.view-details-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const issueId = e.target.dataset.id;
@@ -499,7 +524,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('detail-category').textContent = issue.category || 'Other';
             document.getElementById('detail-urgency').textContent = issue.urgency || 'Low';
 
-            // Show closing remarks if closed
             const remarksContainer = document.getElementById('detail-remarks-container');
             if (issue.status === 'Closed' && issue.closingRemarks) {
               document.getElementById('detail-remarks').textContent = issue.closingRemarks;
@@ -508,7 +532,6 @@ document.addEventListener('DOMContentLoaded', async () => {
               remarksContainer.style.display = 'none';
             }
 
-            // Populate Media Gallery
             const mediaContainer = document.getElementById('detail-media-gallery');
             mediaContainer.innerHTML = '';
             const urls = issue.photoUrl.split(',');
@@ -522,10 +545,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               }
             });
 
-            // Show modal
             document.getElementById('modal-issue-details').style.display = 'flex';
 
-            // Initialize or update Map
             setTimeout(() => {
               const coords = [issue.location.lat, issue.location.lng];
               if(!adminMap) {
@@ -537,7 +558,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               } else {
                 adminMap.setView(coords, 17);
                 adminMarker.setLatLng(coords);
-                adminMap.invalidateSize(); // Fixes map rendering glitch inside modals
+                adminMap.invalidateSize(); 
               }
             }, 100);
           });
@@ -596,11 +617,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('refresh-issues')?.addEventListener('click', fetchAdminIssues);
     
-    // -- Admin Export CSV Feature --
     document.getElementById('export-csv')?.addEventListener('click', () => {
         if(!allAdminIssues || !allAdminIssues.length) return alert('No data available to export.');
         let csvContent = "data:text/csv;charset=utf-8,";
-        // CSV Header
         csvContent += "ID,Reporter Name,Category,Urgency,Status,CreatedAt,ClosedAt,User Rating (1-5),Closing Remarks\n";
         
         allAdminIssues.forEach(i => {
@@ -624,7 +643,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     fetchAdminIssues();
 
-    // -- Admin Profile & Settings Handling --
     const loadAdminProfile = async () => {
       try {
         const res = await fetch('/api/user/me');
@@ -686,14 +704,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await res.json();
         chatLog.removeChild(typing);
 
+        // Fixed blind 'Connection error.' handler: It now shows exactly what the backend sends back.
         if (res.ok && data.reply) {
           chatLog.innerHTML += `<div class="chat-bubble ai-msg">${data.reply}</div>`;
         } else {
-          chatLog.innerHTML += `<div class="chat-bubble ai-msg error">${data.error || 'Connection error.'}</div>`;
+          chatLog.innerHTML += `<div class="chat-bubble ai-msg error">${data.error || 'Server rejected request.'}</div>`;
         }
       } catch (err) {
         chatLog.removeChild(typing);
-        chatLog.innerHTML += `<div class="chat-bubble ai-msg error">Connection error.</div>`;
+        chatLog.innerHTML += `<div class="chat-bubble ai-msg error">Critical API Error. Server is offline.</div>`;
       }
     };
 
