@@ -53,6 +53,8 @@ const reportSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   photoUrl: { type: String, required: true },
   description: { type: String, required: true },
+  category: { type: String, enum: ['Waste Management', 'Infrastructure', 'Plumbing', 'Electrical', 'Hazard', 'Other'], default: 'Other' },
+  urgency: { type: String, enum: ['Low', 'Medium', 'High', 'Critical'], default: 'Low' },
   location: { lat: Number, lng: Number },
   status: {
     type: String,
@@ -60,7 +62,9 @@ const reportSchema = new mongoose.Schema({
     default: 'Pending'
   },
   closingRemarks: { type: String, default: '' },
-  createdAt: { type: Date, default: Date.now }
+  rating: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  closedAt: { type: Date }
 });
 const Report = mongoose.model('Report', reportSchema);
 
@@ -114,6 +118,7 @@ app.get('/api/leaderboard', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }
 });
+
 // --- File Upload API ---
 app.post('/api/upload', requireAuth, upload.array('media', 5), (req, res) => {
   if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No files uploaded' });
@@ -131,6 +136,7 @@ app.delete('/api/upload', requireAuth, (req, res) => {
   }
   res.json({ success: true });
 });
+
 // --- Reports APIs (Phase 4 & 5) ---
 // Admin: Get all reports
 app.get('/api/reports', requireAuth, requireAdmin, async (req, res) => {
@@ -158,6 +164,7 @@ app.put('/api/reports/:id/status', requireAuth, requireAdmin, async (req, res) =
     const { status, closingRemarks } = req.body;
     const updateData = { status };
     if (closingRemarks) updateData.closingRemarks = closingRemarks;
+    if (status === 'Closed') updateData.closedAt = new Date();
 
     // Fetch the original report first to check its previous status
     const originalReport = await Report.findById(req.params.id);
@@ -176,14 +183,31 @@ app.put('/api/reports/:id/status', requireAuth, requireAdmin, async (req, res) =
   }
 });
 
+// User: Rate a resolved report
+app.put('/api/reports/:id/rate', requireAuth, async (req, res) => {
+  try {
+    const { rating } = req.body;
+    const report = await Report.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { rating: Number(rating) },
+      { returnDocument: 'after' }
+    );
+    res.json(report);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to rate issue' });
+  }
+});
+
 // User: Create an ACTUAL report (Phase 5)
 app.post('/api/reports', requireAuth, async (req, res) => {
   try {
-    const { photoUrl, description, lat, lng } = req.body;
+    const { photoUrl, description, category, urgency, lat, lng } = req.body;
     const newReport = await Report.create({
       userId: req.user.id,
       photoUrl: photoUrl || 'https://via.placeholder.com/400x300?text=No+Photo+Provided',
       description: description,
+      category: category || 'Other',
+      urgency: urgency || 'Low',
       location: { lat, lng }
     });
     // Increment user report count for gamification
@@ -198,14 +222,41 @@ app.post('/api/reports', requireAuth, async (req, res) => {
 app.post('/api/chat', requireAuth, async (req, res) => {
   try {
     const { message } = req.body;
-    const prompt = `You are the NITC Portal Support Agent. Help users navigate the portal, track issues, and manage dashboard tasks. Keep answers brief.`;
+    
+    // We combine the system prompt directly into the message. 
+    // This safely bypasses strict 'systemInstruction' schema bugs in the newest SDK.
+    const fullPrompt = `You are the NITC Portal Support Agent. Help users navigate the portal, track issues, and manage dashboard tasks. Keep answers brief.\n\nUser: ${message}\nAgent:`;
+    
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash', contents: message, config: { systemInstruction: prompt, temperature: 0.3 }
+      model: 'gemini-2.5-flash', 
+      contents: fullPrompt, 
+      config: { temperature: 0.3 }
     });
+    
     res.json({ reply: response.text });
   } catch (error) {
-    console.error('AI Chat Error:', error); // Prints the real error to your terminal for debugging
-    res.status(500).json({ error: 'Sorry, I am currently facing a server error.' });
+    console.error('AI Chat Error:', error.message); 
+    
+    // Auto-Fallback Mode: If your API key is invalid/expired, we keep the app working 
+    // by providing smart fallback responses instead of crashing the UI.
+    const errorStr = String(error.message).toLowerCase();
+    if (errorStr.includes('key') || errorStr.includes('fetch') || errorStr.includes('400') || errorStr.includes('403') || errorStr.includes('unauthenticated')) {
+      const userMsg = req.body.message.toLowerCase();
+      let mockReply = "Hello! I am the NITC Support AI. How can I help you today?";
+      
+      if (userMsg.includes('track') || userMsg.includes('where')) {
+        mockReply = "To track your reports, click on the 'Track Issues' card on your dashboard. You can filter them by status there.";
+      } else if (userMsg.includes('report') || userMsg.includes('issue')) {
+        mockReply = "You can file a new issue by clicking 'Report Issue' on the dashboard. Don't forget to attach a photo and assign an urgency level!";
+      } else if (userMsg.includes('admin') || userMsg.includes('export') || userMsg.includes('csv')) {
+        mockReply = "Admins can view all campus issues from the Triage Board, update ticket statuses, and export the database as a CSV file.";
+      }
+      
+      return res.json({ reply: `${mockReply}\n\n*(Offline Mode: Your Google API Key is invalid, using fallback responses)*` });
+    }
+
+    // If it's a completely different error, send the REAL error to the UI so you can read it.
+    res.status(500).json({ error: `API Error: ${error.message}` });
   }
 });
 

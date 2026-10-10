@@ -17,10 +17,29 @@
   </header>
 
   <main class="tracking-container">
+    
+    <!-- Filter UI -->
+    <div style="margin-bottom: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+      <label for="status-filter" style="font-weight: bold;">Filter Status:</label>
+      <select id="status-filter" style="padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color);">
+        <option value="All">Show All</option>
+        <option value="Pending">Pending</option>
+        <option value="Accepted">Accepted</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Closed">Closed</option>
+        <option value="Declined">Declined</option>
+      </select>
+    </div>
+
     <div id="my-issues-list" class="issues-list">
       <!-- Injected via app.js -->
     </div>
   </main>
+
+  <!-- Daily Quote Footer -->
+  <footer class="daily-footer">
+    <marquee id="daily-quote-marquee" scrollamount="6">Loading today's environmental quote...</marquee>
+  </footer>
 
   <script src="app.js"></script>
 </body>

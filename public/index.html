@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
   </head>
-  <body>
+  <body id="login-body" style="transition: background 1s ease-in-out;">
     <div class="login-container">
       <i class="ph ph-info info-icon" id="info-toggle"></i>
       <i class="ph ph-leaf" style="font-size: 48px; color: #2e7d32;"></i>
@@ -32,10 +32,14 @@
         <p>This service allows the NITC community to report environmental hazards, broken infrastructure, and waste mismanagement.</p>
         <p><strong>How to use:</strong> Ensure your GPS is enabled when taking a photo of the issue so the corporation can accurately locate it.</p>
         <p><strong>Privacy:</strong> Location data is strictly used for issue resolution and is not tracked continuously.</p>
-        <!-- Added 'close-modal' class so app.js knows to close the overlay when clicked -->
         <button class="close-btn close-modal" id="close-info-modal">Got it</button>
       </div>
     </div>
+
+    <!-- Daily Quote Footer -->
+    <footer style="position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.8); color: #fff; padding: 12px 0; font-size: 14px; font-weight: bold; z-index: 1000;">
+      <marquee id="daily-quote-marquee" scrollamount="6">Loading today's environmental quote...</marquee>
+    </footer>
 
     <script src="app.js"></script>
   </body>

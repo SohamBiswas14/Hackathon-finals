@@ -7,6 +7,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   });
 
+  // Daily Quote Logic (Global & Dynamic via API)
+  const dailyQuoteMarquee = document.getElementById('daily-quote-marquee');
+  if (dailyQuoteMarquee) {
+    const today = new Date().toDateString();
+    const storedQuote = localStorage.getItem('dailyQuote');
+    const storedDate = localStorage.getItem('dailyQuoteDate');
+
+    // If we already fetched a quote today, use it. Otherwise, fetch a new one!
+    if (storedDate === today && storedQuote) {
+      dailyQuoteMarquee.textContent = "🌍 Quote of the Day: " + storedQuote;
+    } else {
+      fetch('https://dummyjson.com/quotes/random')
+        .then(res => res.json())
+        .then(data => {
+          const quoteText = `“${data.quote}” — ${data.author}`;
+          localStorage.setItem('dailyQuote', quoteText);
+          localStorage.setItem('dailyQuoteDate', today);
+          dailyQuoteMarquee.textContent = "🌍 Quote of the Day: " + quoteText;
+        })
+        .catch(err => {
+          console.error("Failed to fetch quote:", err);
+          const fallback = "“The Earth is what we all have in common.” — Wendell Berry";
+          dailyQuoteMarquee.textContent = "🌍 Quote of the Day: " + fallback;
+        });
+    }
+  }
+
   // Modal Overlay Interactions
   window.addEventListener('click', (e) => { if (e.target.classList.contains('modal-overlay')) e.target.style.display = 'none'; });
   document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', (e) => e.target.closest('.modal-overlay').style.display = 'none'));
@@ -17,8 +44,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupModal('btn-help', 'modal-help');
   setupModal('btn-settings', 'modal-settings');
 
-  // --- Phase 1: Login Check ---
+  // --- Phase 1: Login Check & Rotating Backgrounds ---
   if (!document.querySelector('.dashboard-body') && !document.querySelector('.admin-body')) {
+    
+    // Rotating Backgrounds for Login Page
+    const bgs = [
+      'url("https://upload.wikimedia.org/wikipedia/commons/e/e4/NIT_Calicut_Main_Building.jpg")',
+      'url("https://images.shiksha.com/mediadata/images/1572506240phpLp1vL8.jpeg")',
+      'url("https://www.nitc.ac.in/xc-assets/images/header/image-1.jpg")'
+    ];
+    let bgIndex = 0;
+    setInterval(() => {
+      bgIndex = (bgIndex + 1) % bgs.length;
+      document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), ${bgs[bgIndex]}`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center center';
+    }, 6000);
+
     if (new URLSearchParams(window.location.search).get('error') === 'domain') {
       document.getElementById('error-msg').style.display = 'block';
       window.history.replaceState({}, document.title, '/');
@@ -72,7 +114,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let defaultCoords = [11.3216, 75.9336];
     let map = L.map('map').setView(defaultCoords, 15);
 
-    // CHANGED: Using Esri World Street Map tiles which are free, reliable, and do not require an API key
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
       maxZoom: 19
@@ -90,14 +131,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, () => alert("Please allow location access in your browser."));
       }
     });
-// Handle Local File Uploads (Photos & Videos)
+
+    // Handle Local File Uploads (Photos & Videos)
     const mediaUpload = document.getElementById('media-upload');
     const btnUploadMedia = document.getElementById('btn-upload-media');
     const photoUrlInput = document.getElementById('photo-url');
     const uploadStatus = document.getElementById('upload-status');
     const previewContainer = document.getElementById('media-preview-container');
 
-    // Array to track all uploaded file URLs
     let uploadedFiles = [];
 
     if (btnUploadMedia && mediaUpload) {
@@ -123,10 +164,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           if (res.ok) {
             const data = await res.json();
-            // Append new files to our array
             uploadedFiles = uploadedFiles.concat(data.urls);
             updatePreviewAndInput();
-
             uploadStatus.textContent = 'Files uploaded successfully!';
             uploadStatus.style.color = 'var(--primary-color)';
           } else {
@@ -138,20 +177,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           uploadStatus.textContent = 'Error connecting to server for upload.';
           uploadStatus.style.color = 'red';
         }
-
-        // Reset file input so the user can select the same file again if they deleted it
         mediaUpload.value = '';
       });
 
-      // Global function to remove a file when the 'X' button is clicked
       window.removeUploadedFile = async (index) => {
         const urlToRemove = uploadedFiles[index];
-
-        // Remove from UI array instantly
         uploadedFiles.splice(index, 1);
         updatePreviewAndInput();
-
-        // Tell backend to delete the file from the server
         try {
           await fetch('/api/upload', {
             method: 'DELETE',
@@ -161,11 +193,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (err) { console.error('Failed to delete file on server', err); }
       };
 
-      // Function to render the UI previews and update the hidden text box
       function updatePreviewAndInput() {
-        // We store the URLs as a comma-separated list in the hidden database input
         photoUrlInput.value = uploadedFiles.join(',');
-
         previewContainer.innerHTML = '';
         uploadedFiles.forEach((url, index) => {
           const isVideo = url.match(/\.(mp4|webm|ogg)$/i);
@@ -182,11 +211,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       }
     }
+
     // Handle Form Submit
     document.getElementById('issue-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const photoUrl = document.getElementById('photo-url').value;
       const description = document.getElementById('issue-desc').value;
+      const category = document.getElementById('issue-category').value;
+      const urgency = document.getElementById('issue-urgency').value;
       const position = marker.getLatLng();
 
       try {
@@ -196,6 +228,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           body: JSON.stringify({
             photoUrl,
             description,
+            category,
+            urgency,
             lat: position.lat,
             lng: position.lng
           })
@@ -208,45 +242,103 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Phase 4: User Issue Tracking List ---
   if (document.querySelector('.track-body')) {
+    let allUserIssues = [];
+
+    const renderMyIssues = (filterVal = 'All') => {
+      const list = document.getElementById('my-issues-list');
+      list.innerHTML = '';
+
+      let filteredIssues = allUserIssues;
+      if (filterVal !== 'All') {
+          filteredIssues = allUserIssues.filter(i => i.status === filterVal);
+      }
+
+      if(filteredIssues.length === 0) return list.innerHTML = '<p>No issues found for this filter.</p>';
+
+      filteredIssues.forEach((issue, index) => {
+        const states = ['Pending', 'Accepted', 'Team Dispatched', 'In Progress', 'Closed'];
+        const currentIndex = states.indexOf(issue.status);
+
+        let timelineHtml = `<div class="timeline-bar">`;
+        states.forEach((s, idx) => {
+          if(issue.status === 'Declined') timelineHtml += `<div class="timeline-step ${s==='Pending'?'active':''}" data-label="${s}"></div>`;
+          else timelineHtml += `<div class="timeline-step ${idx <= currentIndex ? 'active' : ''}" data-label="${s}"></div>`;
+        });
+        timelineHtml += `</div>`;
+
+        let remarksHtml = '';
+        if (issue.status === 'Closed' && issue.closingRemarks) remarksHtml = `<div class="track-remarks"><strong>Resolution:</strong> ${issue.closingRemarks}</div>`;
+        if (issue.status === 'Declined') remarksHtml = `<div class="track-remarks" style="background:#ffebee; color:#c62828;">Issue Declined by Management</div>`;
+
+        // Rating UI if Closed
+        let ratingHtml = '';
+        if (issue.status === 'Closed') {
+            if (issue.rating > 0) {
+                ratingHtml = `<div style="margin-top: 10px; font-size: 13px; color: var(--primary-color);">You rated this resolution: <strong>${issue.rating} / 5 Stars</strong></div>`;
+            } else {
+                ratingHtml = `
+                <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 6px;">
+                  <label style="font-size:12px; display:block; margin-bottom:5px;">Rate Resolution Quality:</label>
+                  <div style="display:flex; gap: 5px;">
+                    <select class="issue-rating-select" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color);">
+                      <option value="5">5 - Excellent</option>
+                      <option value="4">4 - Good</option>
+                      <option value="3">3 - Average</option>
+                      <option value="2">2 - Poor</option>
+                      <option value="1">1 - Terrible</option>
+                    </select>
+                    <button class="btn-primary rate-submit-btn" data-id="${issue._id}" style="padding: 4px 12px;">Submit Rating</button>
+                  </div>
+                </div>`;
+            }
+        }
+
+        list.innerHTML += `
+        <div class="track-card">
+          <img src="${issue.photoUrl.split(',')[0]}" alt="Thumbnail">
+          <div class="track-details">
+            <h4>Serial No.: ${index + 1} <span style="font-size:12px; color: #666; font-weight:normal; float:right;">${issue.category || 'Other'}</span></h4>
+            <h4>Reported on: ${new Date(issue.createdAt).toLocaleDateString()}</h4>
+            <p>${issue.description}</p>
+            ${timelineHtml}
+            ${remarksHtml}
+            ${ratingHtml}
+          </div>
+        </div>`;
+      });
+
+      // Attach Rating Event Listeners
+      document.querySelectorAll('.rate-submit-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+              const issueId = e.target.dataset.id;
+              const selectEl = e.target.previousElementSibling;
+              const rating = selectEl.value;
+              try {
+                  const res = await fetch(`/api/reports/${issueId}/rate`, {
+                      method: 'PUT',
+                      headers: {'Content-Type': 'application/json'},
+                      body: JSON.stringify({ rating })
+                  });
+                  if (res.ok) {
+                      alert('Thank you for your feedback!');
+                      fetchMyIssues(); // Refresh list to hide the dropdown and show the score
+                  }
+              } catch (err) { console.error('Rating failed', err); }
+          });
+      });
+    };
+
     const fetchMyIssues = async () => {
       try {
         const res = await fetch('/api/reports/my-issues');
-        const issues = await res.json();
-        const list = document.getElementById('my-issues-list');
-        list.innerHTML = '';
-
-        if(issues.length === 0) return list.innerHTML = '<p>No issues reported yet.</p>';
-
-       issues.forEach((issue, index) => {
-          const states = ['Pending', 'Accepted', 'Team Dispatched', 'In Progress', 'Closed'];
-          const currentIndex = states.indexOf(issue.status);
-
-          let timelineHtml = `<div class="timeline-bar">`;
-          states.forEach((s, idx) => {
-            if(issue.status === 'Declined') timelineHtml += `<div class="timeline-step ${s==='Pending'?'active':''}" data-label="${s}"></div>`;
-            else timelineHtml += `<div class="timeline-step ${idx <= currentIndex ? 'active' : ''}" data-label="${s}"></div>`;
-          });
-          timelineHtml += `</div>`;
-
-          let remarksHtml = '';
-          if (issue.status === 'Closed' && issue.closingRemarks) remarksHtml = `<div class="track-remarks"><strong>Resolution:</strong> ${issue.closingRemarks}</div>`;
-          if (issue.status === 'Declined') remarksHtml = `<div class="track-remarks" style="background:#ffebee; color:#c62828;">Issue Declined by Management</div>`;
-
-         list.innerHTML += `
-  <div class="track-card">
-    <img src="${issue.photoUrl.split(',')[0]}" alt="Thumbnail">
-    <div class="track-details">
-      <h4>Serial No.: ${index + 1}</h4>
-      <h4>Reported on: ${new Date(issue.createdAt).toLocaleDateString()}</h4>
-      <p>${issue.description}</p>
-      ${timelineHtml}
-      ${remarksHtml}
-    </div>
-  </div>`;
-        });
+        allUserIssues = await res.json();
+        const filterVal = document.getElementById('status-filter').value;
+        renderMyIssues(filterVal);
       } catch (err) { console.error(err); }
     };
     fetchMyIssues();
+
+    document.getElementById('status-filter')?.addEventListener('change', (e) => renderMyIssues(e.target.value));
   }
 
   // --- Phase 5: Contributions & Gamification ---
@@ -309,19 +401,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         const colPending = document.getElementById('col-pending');
         const colActive = document.getElementById('col-active');
         const colClosed = document.getElementById('col-closed');
+        const closedReportsList = document.getElementById('closed-reports-list');
 
         colPending.innerHTML = ''; colActive.innerHTML = ''; colClosed.innerHTML = '';
+        if (closedReportsList) closedReportsList.innerHTML = '';
 
         allAdminIssues = issues; // Save issues to state for the modal
+        let totalTime = 0;
+        let closedCount = 0;
 
         issues.forEach(issue => {
           const uName = issue.userId?.anonymityEnabled ? 'Anonymous' : (issue.userId?.name || 'Unknown');
           const card = document.createElement('div');
           card.className = `issue-card status-${issue.status.replace(' ', '')}`;
           card.innerHTML = `
-            <span class="status-badge status-${issue.status.replace(' ', '')}">${issue.status}</span>
+            <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 5px;">
+              <span class="status-badge status-${issue.status.replace(' ', '')}">${issue.status}</span>
+              <span style="font-size:10px; color:#fff; background:${issue.urgency==='Critical'?'#c62828':issue.urgency==='High'?'#f57c00':issue.urgency==='Medium'?'#fbc02d':'#4caf50'}; padding: 3px 6px; border-radius: 4px; font-weight:bold;">${issue.urgency}</span>
+            </div>
             <img src="${issue.photoUrl.split(',')[0]}" alt="Issue Photo">
-            <h4>Reported by: ${uName}</h4>
+            <h4 style="margin-bottom: 2px;">${issue.category || 'Other'}</h4>
+            <p style="font-size:11px; margin-bottom: 5px; color:#888;">Reported by: ${uName}</p>
             <p>${issue.description}</p>
             <button type="button" class="btn-secondary view-details-btn" data-id="${issue._id}" style="width: 100%; padding: 6px; margin: 8px 0; font-size: 13px;">View Map & Full Media</button>
             <div class="issue-actions" data-id="${issue._id}">
@@ -332,7 +432,57 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (issue.status === 'Pending') colPending.appendChild(card);
           else if (['Accepted', 'Team Dispatched', 'In Progress'].includes(issue.status)) colActive.appendChild(card);
           else colClosed.appendChild(card);
+
+          // Populate the new Admin Overview Page with completed tracking
+          if (issue.status === 'Closed' && closedReportsList) {
+             let timeText = 'Unknown time (legacy)';
+             if (issue.closedAt && issue.createdAt) {
+                 const diff = new Date(issue.closedAt) - new Date(issue.createdAt);
+                 const hours = Math.floor(diff / (1000 * 60 * 60));
+                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                 timeText = `${hours}h ${minutes}m`;
+                 totalTime += diff;
+                 closedCount++;
+             }
+
+             const archiveCard = document.createElement('div');
+             archiveCard.className = `issue-card status-Closed`;
+             archiveCard.innerHTML = `
+                <div style="display:flex; justify-content: space-between; margin-bottom: 5px;">
+                  <span class="status-badge status-Closed">Closed</span>
+                  <span style="font-size:12px; color:#666;"><i class="ph ph-clock"></i> Res. Time: <strong>${timeText}</strong></span>
+                </div>
+                <h4>Reported by: ${uName}</h4>
+                <p style="margin-bottom: 8px;">${issue.description}</p>
+                <div style="background:#e8f5e9; padding: 8px; border-radius: 4px; font-size:13px; color:#1b5e20; margin-bottom: 5px;">
+                  <strong>Remarks:</strong> ${issue.closingRemarks || 'No remarks provided'}
+                </div>
+                ${issue.rating > 0 ? `<div style="font-size: 12px; color: var(--primary-color);">Citizen Rating: <strong>${issue.rating} / 5</strong></div>` : ''}
+             `;
+             closedReportsList.appendChild(archiveCard);
+          }
         });
+
+        // Generate Metrics Component
+        const overviewStats = document.getElementById('overview-stats');
+        if (overviewStats) {
+            if (closedCount > 0) {
+                const avgDiff = totalTime / closedCount;
+                const avgHours = Math.floor(avgDiff / (1000 * 60 * 60));
+                const avgMins = Math.floor((avgDiff % (1000 * 60 * 60)) / (1000 * 60));
+                overviewStats.innerHTML = `
+                <div class="cta-card secondary" style="padding: 20px; text-align: left; display: flex; align-items: center; gap: 20px;">
+                    <i class="ph ph-chart-line-up" style="font-size: 40px; margin:0;"></i>
+                    <div>
+                      <h4 style="margin:0; font-size: 16px; color: #666;">Average Resolution Time</h4>
+                      <h2 style="margin: 5px 0 0 0; font-size: 28px; color: var(--text-color);">${avgHours}h ${avgMins}m</h2>
+                      <p style="margin: 5px 0 0 0; font-size:13px; color:#888;">Based on ${closedCount} successfully tracked closed tickets.</p>
+                    </div>
+                </div>`;
+            } else {
+                overviewStats.innerHTML = `<p style="color:#666;">No valid closed tickets available to calculate analytics.</p>`;
+            }
+        }
 
         attachAdminActionListeners();
 
@@ -346,6 +496,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const uName = issue.userId?.anonymityEnabled ? 'Anonymous Citizen' : (issue.userId?.name || 'Unknown User');
             document.getElementById('detail-reporter').textContent = uName;
             document.getElementById('detail-description').textContent = issue.description;
+            document.getElementById('detail-category').textContent = issue.category || 'Other';
+            document.getElementById('detail-urgency').textContent = issue.urgency || 'Low';
 
             // Show closing remarks if closed
             const remarksContainer = document.getElementById('detail-remarks-container');
@@ -443,7 +595,71 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.getElementById('refresh-issues')?.addEventListener('click', fetchAdminIssues);
+    
+    // -- Admin Export CSV Feature --
+    document.getElementById('export-csv')?.addEventListener('click', () => {
+        if(!allAdminIssues || !allAdminIssues.length) return alert('No data available to export.');
+        let csvContent = "data:text/csv;charset=utf-8,";
+        // CSV Header
+        csvContent += "ID,Reporter Name,Category,Urgency,Status,CreatedAt,ClosedAt,User Rating (1-5),Closing Remarks\n";
+        
+        allAdminIssues.forEach(i => {
+            let reporter = i.userId?.name || 'Anonymous';
+            let remarks = i.closingRemarks ? i.closingRemarks.replace(/,/g, " ") : "None";
+            let cAt = new Date(i.createdAt).toISOString();
+            let dAt = i.closedAt ? new Date(i.closedAt).toISOString() : "Not Closed";
+            
+            let row = `${i._id},${reporter},${i.category || 'Other'},${i.urgency || 'Low'},${i.status},${cAt},${dAt},${i.rating || 0},${remarks}`;
+            csvContent += row + "\n";
+        });
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `nitc_reports_export_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    });
+
     fetchAdminIssues();
+
+    // -- Admin Profile & Settings Handling --
+    const loadAdminProfile = async () => {
+      try {
+        const res = await fetch('/api/user/me');
+        if (res.ok) {
+          const user = await res.json();
+          document.getElementById('admin-display-name').textContent = user.name || 'Admin';
+          const avatar = document.getElementById('admin-avatar');
+          if (avatar) avatar.src = user.picture || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name);
+          const nameInput = document.getElementById('admin-edit-name');
+          if (nameInput) nameInput.value = user.name || '';
+          const deptInput = document.getElementById('admin-edit-dept');
+          if (deptInput) deptInput.value = user.department || '';
+        }
+      } catch (err) { console.error('Failed to load admin profile', err); }
+    };
+    loadAdminProfile();
+
+    document.getElementById('save-admin-profile')?.addEventListener('click', async () => {
+      const name = document.getElementById('admin-edit-name').value;
+      const dept = document.getElementById('admin-edit-dept').value;
+      try {
+        const res = await fetch('/api/user/me', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, department: dept }) });
+        if (res.ok) { alert('Admin Profile updated successfully!'); loadAdminProfile(); }
+      } catch (err) { console.error('Failed to update admin profile', err); }
+    });
+
+    document.getElementById('toggle-theme-admin')?.addEventListener('click', () => {
+      const isDark = document.body.classList.toggle('dark-theme');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+
+    document.getElementById('toggle-fullscreen-admin')?.addEventListener('click', () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(err => console.log(err));
+      else document.exitFullscreen();
+    });
   }
 
   // --- Shared Component: AI Chatbot ---
@@ -470,11 +686,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await res.json();
         chatLog.removeChild(typing);
 
-        // Check if the server responded successfully before trying to print 'data.reply'
         if (res.ok && data.reply) {
           chatLog.innerHTML += `<div class="chat-bubble ai-msg">${data.reply}</div>`;
         } else {
-          // If there is an error, print the error message instead of 'undefined'
           chatLog.innerHTML += `<div class="chat-bubble ai-msg error">${data.error || 'Connection error.'}</div>`;
         }
       } catch (err) {
